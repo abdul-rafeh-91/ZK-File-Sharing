@@ -239,21 +239,29 @@ def receive():
     code = request.form.get('code')
     decrypt = 'decrypt' in request.form
 
+    # Add logging to debug the issue
+    logging.debug(f"Received code: {code}")
+
     # Retrieve the code from MongoDB
     file_info = db.codes.find_one({'code': code})
 
     if file_info:
+        logging.debug(f"File info retrieved: {file_info}")
+
         if time.time() - file_info['timestamp'] > 600:
+            logging.warning("Code expired!")
             return render_template('dashboard.html', error_message='Code expired!')
 
         file_url = file_info['file_url']
         s3_key = file_url.split('/')[-1]  # Extract the key from the URL
+        logging.debug(f"S3 key: {s3_key}")
 
         # Decrypt file if requested (download from S3, decrypt, and serve)
         if decrypt:
             local_path = os.path.join(app.config['UPLOAD_FOLDER'], s3_key)
             try:
                 s3_client.download_file(S3_BUCKET, s3_key, local_path)
+                logging.info(f"File downloaded successfully to {local_path}")
             except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] == '404':
                     logging.error(f"File with key {s3_key} not found in S3.")
@@ -263,12 +271,18 @@ def receive():
                     return render_template('dashboard.html', error_message='An unexpected error occurred!')
 
             password = 'securepassword'  # Replace with a user-provided password if needed
-            decrypt_file(local_path, password)
+            try:
+                decrypt_file(local_path, password)
+                logging.info("File decrypted successfully.")
+            except Exception as e:
+                logging.error(f"Error during decryption: {e}")
+                return render_template('dashboard.html', error_message='Decryption failed!')
 
             return send_file(local_path, as_attachment=True)
 
         return redirect(file_url)
 
+    logging.warning("Invalid code entered.")
     flash('Invalid code! Please try again.')
     return render_template('dashboard.html', error_message='Invalid code! Please try again.')
 
