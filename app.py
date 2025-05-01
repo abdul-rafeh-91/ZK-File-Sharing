@@ -35,6 +35,14 @@ client = MongoClient(mongo_uri)
 db = client['zk_file_share']
 users_collection = db['User']
 
+# Test MongoDB connection
+try:
+    client.admin.command('ping')
+    logging.info("MongoDB connection successful.")
+except Exception as e:
+    logging.error(f"MongoDB connection failed: {e}")
+    raise
+
 # In-memory storage for simplicity
 files = {}
 codes = {}
