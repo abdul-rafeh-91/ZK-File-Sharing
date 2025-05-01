@@ -185,6 +185,8 @@ def upload():
 
     if file:
         filename = secure_filename(file.filename)
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
+        s3_key = f"{code}_{filename}"
 
         # If encryption is enabled, encrypt the file in memory
         if encrypt:
@@ -209,14 +211,13 @@ def upload():
 
         # Upload directly to S3
         try:
-            s3_client.put_object(Bucket=S3_BUCKET, Key=filename, Body=file_content)
-            file_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{filename}"
+            s3_client.put_object(Bucket=S3_BUCKET, Key=s3_key, Body=file_content)
+            file_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{s3_key}"
         except Exception as e:
             logging.error(f"Error uploading to S3: {e}")
             flash('File upload failed!')
             return redirect(url_for('dashboard'))
 
-        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
         codes[code] = {'file_url': file_url, 'timestamp': time.time()}
         flash(f'File uploaded successfully! Share this code: {code}')
         return render_template('dashboard.html', code=code, countdown=600)
@@ -238,16 +239,16 @@ def receive():
             return render_template('dashboard.html', error_message='Code expired!')
 
         file_url = file_info['file_url']
+        s3_key = file_url.split('/')[-1]  # Extract the key from the URL
 
         # Decrypt file if requested (download from S3, decrypt, and serve)
         if decrypt:
-            # Download file from S3
-            local_path = os.path.join(app.config['UPLOAD_FOLDER'], code)
+            local_path = os.path.join(app.config['UPLOAD_FOLDER'], s3_key)
             try:
-                s3_client.download_file(S3_BUCKET, code, local_path)
+                s3_client.download_file(S3_BUCKET, s3_key, local_path)
             except botocore.exceptions.ClientError as e:
                 if e.response['Error']['Code'] == '404':
-                    logging.error(f"File with key {code} not found in S3.")
+                    logging.error(f"File with key {s3_key} not found in S3.")
                     return render_template('dashboard.html', error_message='File not found!')
                 else:
                     logging.error(f"Unexpected error: {e}")
