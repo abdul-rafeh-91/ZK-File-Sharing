@@ -242,7 +242,15 @@ def receive():
         if decrypt:
             # Download file from S3
             local_path = os.path.join(app.config['UPLOAD_FOLDER'], code)
-            s3_client.download_file(S3_BUCKET, code, local_path)
+            try:
+                s3_client.download_file(S3_BUCKET, code, local_path)
+            except botocore.exceptions.ClientError as e:
+                if e.response['Error']['Code'] == '404':
+                    logging.error(f"File with key {code} not found in S3.")
+                    return render_template('dashboard.html', error_message='File not found!')
+                else:
+                    logging.error(f"Unexpected error: {e}")
+                    return render_template('dashboard.html', error_message='An unexpected error occurred!')
 
             password = 'securepassword'  # Replace with a user-provided password if needed
             decrypt_file(local_path, password)
