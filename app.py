@@ -16,6 +16,7 @@ from urllib.parse import quote_plus
 import traceback
 import boto3
 from botocore.exceptions import NoCredentialsError
+import botocore
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
