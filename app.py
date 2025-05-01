@@ -218,7 +218,13 @@ def upload():
             flash('File upload failed!')
             return redirect(url_for('dashboard'))
 
-        codes[code] = {'file_url': file_url, 'timestamp': time.time()}
+        # Store the code and file URL in MongoDB
+        db.codes.insert_one({
+            'code': code,
+            'file_url': file_url,
+            'timestamp': time.time()
+        })
+
         flash(f'File uploaded successfully! Share this code: {code}')
         return render_template('dashboard.html', code=code, countdown=600)
 
@@ -233,8 +239,10 @@ def receive():
     code = request.form.get('code')
     decrypt = 'decrypt' in request.form
 
-    if code in codes:
-        file_info = codes[code]
+    # Retrieve the code from MongoDB
+    file_info = db.codes.find_one({'code': code})
+
+    if file_info:
         if time.time() - file_info['timestamp'] > 600:
             return render_template('dashboard.html', error_message='Code expired!')
 
