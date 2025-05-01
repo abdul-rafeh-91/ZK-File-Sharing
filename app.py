@@ -20,6 +20,14 @@ from botocore.exceptions import NoCredentialsError
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Add logging for app initialization
+logging.info("Starting Flask app...")
+
+# Log environment variables for debugging
+logging.debug(f"MONGO_URI: {os.getenv('MONGO_URI')}")
+logging.debug(f"S3_BUCKET: {os.getenv('S3_BUCKET')}")
+logging.debug(f"S3_REGION: {os.getenv('S3_REGION')}")
+
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 UPLOAD_FOLDER = 'uploads'
