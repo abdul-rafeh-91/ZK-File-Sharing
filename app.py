@@ -24,9 +24,11 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # MongoDB setup
-username = quote_plus('abdulrafeh0091')
-password = quote_plus('Rafeh@0091')
-client = MongoClient(f'mongodb+srv://{username}:{password}@cluster0.wnjujo6.mongodb.net/')
+mongo_uri = os.getenv('MONGO_URI')
+if not mongo_uri:
+    raise ValueError("MONGO_URI environment variable is not set")
+
+client = MongoClient(mongo_uri)
 db = client['zk_file_share']
 users_collection = db['User']
 
