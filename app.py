@@ -173,5 +173,8 @@ def receive():
     flash('Invalid code! Please try again.')
     return render_template('dashboard.html', error_message='Invalid code! Please try again.')
 
+# Expose the Flask app as a WSGI callable for Vercel
+app = app
+
 if __name__ == '__main__':
     app.run(debug=True)
