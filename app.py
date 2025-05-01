@@ -258,7 +258,7 @@ def receive():
 
         # Decrypt file if requested (download from S3, decrypt, and serve)
         if decrypt:
-            local_path = os.path.join(app.config['UPLOAD_FOLDER'], s3_key)
+            local_path = os.path.join('/tmp', s3_key)  # Use `/tmp` for temporary files
             try:
                 s3_client.download_file(S3_BUCKET, s3_key, local_path)
                 logging.info(f"File downloaded successfully to {local_path}")
