@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard</h1>
+        <div class="panel">
+            <div class="sending-panel">
+                <h2>Sending Panel</h2>
+                <form action="/upload" method="POST" enctype="multipart/form-data">
+                    <label for="file">Upload File:</label>
+                    <input type="file" id="file" name="file" required>
+
+                    <label for="encrypt">Encrypt File:</label>
+                    <input type="checkbox" id="encrypt" name="encrypt">
+
+                    <button type="submit">Send</button>
+                </form>
+            </div>
+
+            <div class="receiving-panel">
+                <h2>Receiving Panel</h2>
+                <form action="/receive" method="POST">
+                    <label for="code">Enter Code:</label>
+                    <input type="text" id="code" name="code" required>
+
+                    <label for="decrypt">Decrypt File:</label>
+                    <input type="checkbox" id="decrypt" name="decrypt">
+
+                    <button type="submit">Receive</button>
+                </form>
+
+                <div class="error-message" style="color: red; text-align: center;">
+                    {% if error_message %}
+                        <p>{{ error_message }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="code-display" id="code-section" style="display: none;">
+            <h3>Your Code: <span id="code">{{ code }}</span></h3>
+            <p>Expires in: <span id="countdown">{{ countdown }}</span> seconds</p>
+        </div>
+    </div>
+
+    <script>
+        const codeSection = document.getElementById('code-section');
+        const countdownElement = document.getElementById('countdown');
+        let countdown = parseInt(countdownElement.textContent);
+
+        if (countdown > 0) {
+            codeSection.style.display = 'block';
+            const interval = setInterval(() => {
+                countdown--;
+                countdownElement.textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(interval);
+                    codeSection.style.display = 'none';
+                    alert('Code expired!');
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
