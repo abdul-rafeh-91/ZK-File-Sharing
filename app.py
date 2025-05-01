@@ -28,31 +28,28 @@ logging.debug(f"MONGO_URI: {os.getenv('MONGO_URI')}")
 logging.debug(f"S3_BUCKET: {os.getenv('S3_BUCKET')}")
 logging.debug(f"S3_REGION: {os.getenv('S3_REGION')}")
 
-app = Flask(__name__)
-app.secret_key = 'your_secret_key'
-UPLOAD_FOLDER = 'uploads'
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# AWS S3 Configuration
+# Use environment variables for sensitive information
+MONGO_URI = os.getenv('MONGO_URI')
+FLASK_SECRET_KEY = os.getenv('FLASK_SECRET_KEY')
 S3_BUCKET = os.getenv('S3_BUCKET')
 S3_ACCESS_KEY = os.getenv('S3_ACCESS_KEY')
 S3_SECRET_KEY = os.getenv('S3_SECRET_KEY')
 S3_REGION = os.getenv('S3_REGION')
 
+app = Flask(__name__)
+app.secret_key = FLASK_SECRET_KEY
+UPLOAD_FOLDER = 'uploads'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# AWS S3 Configuration
 s3_client = boto3.client('s3',
                          aws_access_key_id=S3_ACCESS_KEY,
                          aws_secret_access_key=S3_SECRET_KEY,
                          region_name=S3_REGION)
 
 # MongoDB setup
-# Encode the username and password to handle special characters
-username = quote_plus('abdulrafeh0091')
-password = quote_plus('Rafeh@0091')
-
-# Update the MongoDB connection string to include `tls=true`
-mongo_uri = f'mongodb+srv://{username}:{password}@cluster0.wnjujo6.mongodb.net/?retryWrites=true&w=majority&tls=true'
-client = MongoClient(mongo_uri)
+client = MongoClient(MONGO_URI)
 db = client['zk_file_share']
 users_collection = db['User']
 
