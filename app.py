@@ -14,6 +14,8 @@ import base64
 import logging
 from urllib.parse import quote_plus
 import traceback
+import boto3
+from botocore.exceptions import NoCredentialsError
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -23,6 +25,17 @@ app.secret_key = 'your_secret_key'
 UPLOAD_FOLDER = 'uploads'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+# AWS S3 Configuration
+S3_BUCKET = os.getenv('S3_BUCKET')
+S3_ACCESS_KEY = os.getenv('S3_ACCESS_KEY')
+S3_SECRET_KEY = os.getenv('S3_SECRET_KEY')
+S3_REGION = os.getenv('S3_REGION')
+
+s3_client = boto3.client('s3',
+                         aws_access_key_id=S3_ACCESS_KEY,
+                         aws_secret_access_key=S3_SECRET_KEY,
+                         region_name=S3_REGION)
 
 # MongoDB setup
 # Encode the username and password to handle special characters
@@ -100,6 +113,14 @@ def decrypt_file(filepath, password):
     with open(filepath, 'wb') as f:
         f.write(plaintext)
 
+def upload_to_s3(file_path, file_name):
+    try:
+        s3_client.upload_file(file_path, S3_BUCKET, file_name)
+        return f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{file_name}"
+    except NoCredentialsError:
+        logging.error("AWS credentials not available.")
+        raise
+
 # Routes
 @app.route('/')
 def home():
@@ -165,13 +186,16 @@ def upload():
             password = 'securepassword'  # Replace with a user-provided password if needed
             encrypt_file(filepath, password)
 
+        # Upload to S3
+        file_url = upload_to_s3(filepath, filename)
+
+        # Delete local file after upload
+        os.remove(filepath)
+
         code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
-        # For testing purposes, set a fixed timestamp (e.g., 10 minutes ago)
-        test_offset = 60  # 10 minutes in seconds
-        countdown = 60  # Set countdown dynamically based on test_offset
-        codes[code] = {'file': filename, 'timestamp': time.time() - (600 - countdown)}
+        codes[code] = {'file_url': file_url, 'timestamp': time.time()}
         flash(f'File uploaded successfully! Share this code: {code}')
-        return render_template('dashboard.html', code=code, countdown=countdown)
+        return render_template('dashboard.html', code=code, countdown=600)
 
     flash('File upload failed!')
     return redirect(url_for('dashboard'))
@@ -189,17 +213,20 @@ def receive():
         if time.time() - file_info['timestamp'] > 600:
             return render_template('dashboard.html', error_message='Code expired!')
 
-        filename = file_info['file']
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file_url = file_info['file_url']
 
+        # Decrypt file if requested (download from S3, decrypt, and serve)
         if decrypt:
-            password = 'securepassword'  # Replace with a user-provided password if needed
-            decrypt_file(filepath, password)
+            # Download file from S3
+            local_path = os.path.join(app.config['UPLOAD_FOLDER'], code)
+            s3_client.download_file(S3_BUCKET, code, local_path)
 
-        response = send_file(filepath, as_attachment=True)
-        # Delete the file from the server after sending it to the receiver
-        os.remove(filepath)
-        return response
+            password = 'securepassword'  # Replace with a user-provided password if needed
+            decrypt_file(local_path, password)
+
+            return send_file(local_path, as_attachment=True)
+
+        return redirect(file_url)
 
     flash('Invalid code! Please try again.')
     return render_template('dashboard.html', error_message='Invalid code! Please try again.')
