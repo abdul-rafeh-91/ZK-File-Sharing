@@ -13,6 +13,7 @@ from cryptography.hazmat.backends import default_backend
 import base64
 import logging
 from urllib.parse import quote_plus
+import traceback
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -24,10 +25,12 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # MongoDB setup
-mongo_uri = os.getenv('MONGO_URI')
-if not mongo_uri:
-    raise ValueError("MONGO_URI environment variable is not set")
+# Encode the username and password to handle special characters
+username = quote_plus('abdulrafeh0091')
+password = quote_plus('Rafeh@0091')
 
+# Update the MongoDB connection string with encoded credentials
+mongo_uri = f'mongodb+srv://{username}:{password}@cluster0.wnjujo6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
 client = MongoClient(mongo_uri)
 db = client['zk_file_share']
 users_collection = db['User']
@@ -186,6 +189,12 @@ def receive():
 
     flash('Invalid code! Please try again.')
     return render_template('dashboard.html', error_message='Invalid code! Please try again.')
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    # Log the full traceback for debugging
+    logging.error(f"Unhandled Exception: {traceback.format_exc()}")
+    return "An internal server error occurred. Please try again later.", 500
 
 # Expose the Flask app as a WSGI callable for Vercel
 app = app
