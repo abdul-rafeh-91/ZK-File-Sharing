@@ -278,6 +278,10 @@ def handle_exception(e):
     logging.error(f"Unhandled Exception: {traceback.format_exc()}")
     return "An internal server error occurred. Please try again later.", 500
 
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
 # Expose the Flask app as a WSGI callable for Vercel
 app = app
 
