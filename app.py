@@ -230,7 +230,7 @@ def receive():
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    code = request.form['code']
+    code = request.form.get('code')
     decrypt = 'decrypt' in request.form
 
     if code in codes:
