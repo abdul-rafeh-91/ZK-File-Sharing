@@ -253,10 +253,6 @@ def receive():
             logging.warning("File already received.")
             return render_template('dashboard.html', error_message='File already received!')
 
-        if time.time() - file_info['timestamp'] > 600:
-            logging.warning("Code expired!")
-            return render_template('dashboard.html', error_message='Code expired!')
-
         file_url = file_info['file_url']
         s3_key = file_url.split('/')[-1]  # Extract the key from the URL
         logging.debug(f"S3 key: {s3_key}")
@@ -271,8 +267,8 @@ def receive():
             s3_client.delete_object(Bucket=S3_BUCKET, Key=s3_key)
             logging.info(f"File with key {s3_key} deleted from S3.")
 
-            # Mark the code as used in MongoDB
-            db.codes.update_one({'code': code}, {'$set': {'used': True}})
+            # Mark the code as used in MongoDB and remove it from the sender's dashboard
+            db.codes.update_one({'code': code}, {'$set': {'used': True, 'timestamp': 0}})
         except botocore.exceptions.ClientError as e:
             if e.response['Error']['Code'] == '404':
                 logging.error(f"File with key {s3_key} not found in S3.")
