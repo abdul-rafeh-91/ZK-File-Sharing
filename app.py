@@ -184,25 +184,43 @@ def upload():
 
     if file:
         filename = secure_filename(file.filename)
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(filepath)
 
+        # If encryption is enabled, encrypt the file in memory
         if encrypt:
             password = 'securepassword'  # Replace with a user-provided password if needed
-            encrypt_file(filepath, password)
+            file_content = file.read()
+            salt = os.urandom(16)
+            kdf = PBKDF2HMAC(
+                algorithm=hashes.SHA256(),
+                length=32,
+                salt=salt,
+                iterations=100000,
+                backend=default_backend()
+            )
+            key = kdf.derive(password.encode())
+            iv = os.urandom(16)
+            cipher = Cipher(algorithms.AES(key), modes.CFB(iv), backend=default_backend())
+            encryptor = cipher.encryptor()
+            ciphertext = encryptor.update(file_content) + encryptor.finalize()
+            file_content = salt + iv + ciphertext
+        else:
+            file_content = file.read()
 
-        # Upload to S3
-        file_url = upload_to_s3(filepath, filename)
-
-        # Delete local file after upload
-        os.remove(filepath)
+        # Upload directly to S3
+        try:
+            s3_client.put_object(Bucket=S3_BUCKET, Key=filename, Body=file_content)
+            file_url = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{filename}"
+        except Exception as e:
+            logging.error(f"Error uploading to S3: {e}")
+            flash('File upload failed!')
+            return redirect(url_for('dashboard'))
 
         code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6))
         codes[code] = {'file_url': file_url, 'timestamp': time.time()}
         flash(f'File uploaded successfully! Share this code: {code}')
         return render_template('dashboard.html', code=code, countdown=600)
 
-    flash('File upload failed!')
+    flash('No file selected!')
     return redirect(url_for('dashboard'))
 
 @app.route('/receive', methods=['POST'])
