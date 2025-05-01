@@ -23,9 +23,9 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # MongoDB setup
-client = MongoClient('mongodb+srv://rafeh:<db_password>@cluster0.sdlumdr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
-db = client['file_sharing_app']
-users_collection = db['users']
+client = MongoClient('mongodb+srv://abdulrafeh0091:<Rafeh@0091>@cluster0.wnjujo6.mongodb.net/')
+db = client['zk_file_share']
+users_collection = db['User']
 
 # In-memory storage for simplicity
 files = {}
