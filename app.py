@@ -119,13 +119,17 @@ def signup():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        user = users_collection.find_one({'username': username})
-        if user and check_password_hash(user['password'], password):
-            session['username'] = username
-            return redirect(url_for('dashboard'))
-        flash('Invalid username or password!')
+        try:
+            username = request.form['username']
+            password = request.form['password']
+            user = users_collection.find_one({'username': username})
+            if user and check_password_hash(user['password'], password):
+                session['username'] = username
+                return redirect(url_for('dashboard'))
+            flash('Invalid username or password!')
+        except Exception as e:
+            logging.error(f"Error during login: {e}")
+            flash('An error occurred during login. Please try again later.')
     return render_template('login.html')
 
 @app.route('/dashboard')
