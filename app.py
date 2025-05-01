@@ -11,6 +11,10 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 import base64
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -88,15 +92,20 @@ def home():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        if users_collection.find_one({'username': username}):
-            flash('Username already exists!')
+        try:
+            username = request.form['username']
+            password = request.form['password']
+            if users_collection.find_one({'username': username}):
+                flash('Username already exists!')
+                return redirect(url_for('signup'))
+            hashed_password = generate_password_hash(password)
+            users_collection.insert_one({'username': username, 'password': hashed_password})
+            flash('Signup successful! Please login.')
+            return redirect(url_for('login'))
+        except Exception as e:
+            logging.error(f"Error during signup: {e}")
+            flash('An error occurred during signup. Please try again later.')
             return redirect(url_for('signup'))
-        hashed_password = generate_password_hash(password)
-        users_collection.insert_one({'username': username, 'password': hashed_password})
-        flash('Signup successful! Please login.')
-        return redirect(url_for('login'))
     return render_template('signup.html')
 
 @app.route('/login', methods=['GET', 'POST'])
