@@ -1,24 +1,41 @@
-body {
-    font-family: Arial, sans-serif;
+/* Reset and base */
+* {
     margin: 0;
     padding: 0;
-    background-color: #f4f4f4;
+    box-sizing: border-box;
 }
 
-.container {
-    max-width: 800px;
-    margin: 50px auto;
-    background: #fff;
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #6a11cb, #2575fc);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    animation: fadeIn 1s ease-in;
 }
 
-h1, h2 {
+/* Container */
+.container {
+    max-width: 500px;
+    width: 100%;
+    background: #ffffffdd;
+    backdrop-filter: blur(10px);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    animation: slideIn 0.7s ease-in-out;
+}
+
+/* Headings */
+h1, h2, h3 {
     text-align: center;
-    color: #333;
+    color: #222;
+    margin-bottom: 20px;
 }
 
+/* Form layout */
 form {
     display: flex;
     flex-direction: column;
@@ -26,36 +43,99 @@ form {
 }
 
 label {
-    font-weight: bold;
+    font-weight: 600;
+    color: #333;
 }
 
-input, button {
-    padding: 10px;
+input[type="text"],
+input[type="password"],
+input[type="file"] {
+    padding: 12px;
     font-size: 16px;
     border: 1px solid #ccc;
-    border-radius: 4px;
+    border-radius: 8px;
+    transition: border 0.3s;
 }
 
+input:focus {
+    border-color: #2575fc;
+    outline: none;
+}
+
+/* Buttons */
 button {
-    background-color: #007BFF;
-    color: white;
+    padding: 12px;
+    font-size: 16px;
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
     cursor: pointer;
+    transition: transform 0.2s ease, background 0.4s ease;
 }
 
 button:hover {
-    background-color: #0056b3;
+    transform: scale(1.05);
+    background: linear-gradient(to right, #2575fc, #6a11cb);
 }
 
+/* Panel styling */
 .panel {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     gap: 20px;
 }
 
 .sending-panel, .receiving-panel {
-    flex: 1;
-    background: #f9f9f9;
+    background: #f0f4ff;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-left: 6px solid #2575fc;
+}
+
+.error-message {
+    color: red;
+    text-align: center;
+    margin-top: 10px;
+}
+
+a {
+    color: #2575fc;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Code display section */
+.code-display {
+    margin-top: 30px;
+    background: #e0eaff;
     padding: 15px;
-    border: 1px solid #ddd;
     border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    color: #222;
+    animation: fadeIn 1s ease-in-out;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideIn {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Responsive */
+@media (min-width: 768px) {
+    .panel {
+        flex-direction: row;
+    }
 }
