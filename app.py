@@ -122,7 +122,9 @@ def login():
         try:
             username = request.form['username']
             password = request.form['password']
+            logging.debug(f"Login attempt with username: {username}")
             user = users_collection.find_one({'username': username})
+            logging.debug(f"User found in database: {user}")
             if user and check_password_hash(user['password'], password):
                 session['username'] = username
                 return redirect(url_for('dashboard'))
