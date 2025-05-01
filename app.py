@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
 import base64
 import logging
+from urllib.parse import quote_plus
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -23,7 +24,9 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # MongoDB setup
-client = MongoClient('mongodb+srv://abdulrafeh0091:<Rafeh@0091>@cluster0.wnjujo6.mongodb.net/')
+username = quote_plus('abdulrafeh0091')
+password = quote_plus('Rafeh@0091')
+client = MongoClient(f'mongodb+srv://{username}:{password}@cluster0.wnjujo6.mongodb.net/')
 db = client['zk_file_share']
 users_collection = db['User']
 
