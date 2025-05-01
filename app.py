@@ -50,8 +50,8 @@ s3_client = boto3.client('s3',
 username = quote_plus('abdulrafeh0091')
 password = quote_plus('Rafeh@0091')
 
-# Update the MongoDB connection string with encoded credentials
-mongo_uri = f'mongodb+srv://{username}:{password}@cluster0.wnjujo6.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0'
+# Update the MongoDB connection string to include `tls=true`
+mongo_uri = f'mongodb+srv://{username}:{password}@cluster0.wnjujo6.mongodb.net/?retryWrites=true&w=majority&tls=true'
 client = MongoClient(mongo_uri)
 db = client['zk_file_share']
 users_collection = db['User']
