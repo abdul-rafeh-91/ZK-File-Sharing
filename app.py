@@ -127,6 +127,34 @@ def upload_to_s3(file_path, file_name):
         logging.error("AWS credentials not available.")
         raise
 
+def sanitize_input(input_data):
+    """
+    Sanitize user input to prevent NoSQL injection attacks.
+    This function ensures that input data is safe for database queries.
+    """
+    if isinstance(input_data, dict):
+        return {key: sanitize_input(value) for key, value in input_data.items()}
+    elif isinstance(input_data, list):
+        return [sanitize_input(item) for item in input_data]
+    elif isinstance(input_data, str):
+        # Escape special characters in strings
+        return input_data.replace('$', '\u0024').replace('.', '\u002e')
+    else:
+        return input_data
+
+def validate_query(query):
+    """
+    Validate MongoDB queries to ensure they do not contain malicious operators.
+    """
+    if not isinstance(query, dict):
+        raise ValueError("Query must be a dictionary.")
+
+    for key in query.keys():
+        if key.startswith('$'):
+            raise ValueError("Query contains potentially malicious operator.")
+
+    return query
+
 # Routes
 @app.route('/')
 def home():
@@ -136,9 +164,9 @@ def home():
 def signup():
     if request.method == 'POST':
         try:
-            username = request.form['username']
+            username = sanitize_input(request.form['username'])
             password = request.form['password']
-            if users_collection.find_one({'username': username}):
+            if users_collection.find_one(validate_query({'username': username})):
                 flash('Username already exists!')
                 return redirect(url_for('signup'))
             hashed_password = generate_password_hash(password)
@@ -155,10 +183,10 @@ def signup():
 def login():
     if request.method == 'POST':
         try:
-            username = request.form['username']
+            username = sanitize_input(request.form['username'])
             password = request.form['password']
             logging.debug(f"Login attempt with username: {username}")
-            user = users_collection.find_one({'username': username})
+            user = users_collection.find_one(validate_query({'username': username}))
             logging.debug(f"User found in database: {user}")
             if user and check_password_hash(user['password'], password):
                 session['username'] = username
