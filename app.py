@@ -179,17 +179,19 @@ def signup():
         try:
             username = sanitize_input(request.form['username'])
             password = request.form['password']
-            secret_number = int(request.form['secret_number'])  # Get the secret number
+            secret_number = request.form['secret_number']  # Get the secret number as a string
 
             if users_collection.find_one(validate_query({'username': username})):
                 flash('Username already exists!')
                 return redirect(url_for('signup'))
 
             hashed_password = generate_password_hash(password)
+            hashed_secret_number = generate_password_hash(secret_number)  # Hash the secret number
+
             users_collection.insert_one({
                 'username': username,
                 'password': hashed_password,
-                'secret_number': secret_number  # Store the secret number
+                'secret_number': hashed_secret_number  # Store the hashed secret number
             })
 
             flash('Signup successful! Please login.')
@@ -211,7 +213,7 @@ def login():
             user = users_collection.find_one(validate_query({'username': username}))
 
             if user and check_password_hash(user['password'], password):
-                secret_number = user['secret_number']
+                hashed_secret_number = user['secret_number']
 
                 # Solve the math term provided by the user
                 try:
@@ -220,8 +222,8 @@ def login():
                     flash('Invalid mathematical term!')
                     return redirect(url_for('login'))
 
-                # Verify the solution matches the secret number
-                if solution == secret_number:
+                # Verify the solution matches the hashed secret number
+                if check_password_hash(hashed_secret_number, str(solution)):
                     session['username'] = username
                     return redirect(url_for('dashboard'))
 

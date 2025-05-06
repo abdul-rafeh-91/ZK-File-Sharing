@@ -68,6 +68,26 @@ input[type="file"]:focus {
     background: rgba(255, 255, 255, 0.12);
 }
 
+/* Styling for the secret number input in signup form */
+#secret_number {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+/* Styling for the math term input in login form */
+#math_term {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
 /* Checkbox */
 input[type="checkbox"] {
     transform: scale(1.2);
