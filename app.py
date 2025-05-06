@@ -120,6 +120,19 @@ def decrypt_file(filepath, password):
         f.write(plaintext)
 
 def upload_to_s3(file_path, file_name):
+    """
+    Upload a file to an S3 bucket and return the URL of the uploaded file.
+
+    Args:
+        file_path (str): The path to the file to be uploaded.
+        file_name (str): The name to give the file in the S3 bucket.
+
+    Returns:
+        str: The URL of the uploaded file.
+
+    Raises:
+        NoCredentialsError: If AWS credentials are not available.
+    """
     try:
         s3_client.upload_file(file_path, S3_BUCKET, file_name)
         return f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/{file_name}"
@@ -166,11 +179,19 @@ def signup():
         try:
             username = sanitize_input(request.form['username'])
             password = request.form['password']
+            secret_number = int(request.form['secret_number'])  # Get the secret number
+
             if users_collection.find_one(validate_query({'username': username})):
                 flash('Username already exists!')
                 return redirect(url_for('signup'))
+
             hashed_password = generate_password_hash(password)
-            users_collection.insert_one({'username': username, 'password': hashed_password})
+            users_collection.insert_one({
+                'username': username,
+                'password': hashed_password,
+                'secret_number': secret_number  # Store the secret number
+            })
+
             flash('Signup successful! Please login.')
             return redirect(url_for('login'))
         except Exception as e:
@@ -185,16 +206,39 @@ def login():
         try:
             username = sanitize_input(request.form['username'])
             password = request.form['password']
-            logging.debug(f"Login attempt with username: {username}")
+            math_solution = int(request.form['math_solution'])  # Get the solution to the math term
+
             user = users_collection.find_one(validate_query({'username': username}))
-            logging.debug(f"User found in database: {user}")
+
             if user and check_password_hash(user['password'], password):
-                session['username'] = username
-                return redirect(url_for('dashboard'))
+                secret_number = user['secret_number']
+
+                # Verify the math solution matches the secret number
+                if math_solution == secret_number:
+                    session['username'] = username
+                    return redirect(url_for('dashboard'))
+
+                flash('Incorrect solution to the math term!')
+                return redirect(url_for('login'))
+
             flash('Invalid username or password!')
         except Exception as e:
             logging.error(f"Error during login: {e}")
             flash('An error occurred during login. Please try again later.')
+    else:
+        # Generate a random math term for GET request
+        import random
+        num1 = random.randint(1, 10)
+        num2 = random.randint(1, 10)
+        operation = random.choice(['+', '*'])
+        math_term = f"{num1} {operation} {num2}"
+        solution = eval(math_term)  # Calculate the solution
+
+        # Store the solution temporarily in the session
+        session['math_solution'] = solution
+
+        return render_template('login.html', math_term=math_term)
+
     return render_template('login.html')
 
 @app.route('/dashboard')
