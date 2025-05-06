@@ -218,11 +218,12 @@ def login():
                 # Solve the math term provided by the user
                 try:
                     solution = eval(math_term)  # Evaluate the math term
+                    hashed_solution = generate_password_hash(str(solution))  # Hash the solution
                 except Exception as e:
                     flash('Invalid mathematical term!')
                     return redirect(url_for('login'))
 
-                # Verify the solution matches the hashed secret number
+                # Verify the hashed solution matches the hashed secret number
                 if check_password_hash(hashed_secret_number, str(solution)):
                     session['username'] = username
                     return redirect(url_for('dashboard'))
