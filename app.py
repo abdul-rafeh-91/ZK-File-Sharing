@@ -206,15 +206,22 @@ def login():
         try:
             username = sanitize_input(request.form['username'])
             password = request.form['password']
-            math_solution = int(request.form['math_solution'])  # Get the solution to the math term
+            math_term = request.form['math_term']  # Get the math term input from the user
 
             user = users_collection.find_one(validate_query({'username': username}))
 
             if user and check_password_hash(user['password'], password):
                 secret_number = user['secret_number']
 
-                # Verify the math solution matches the secret number
-                if math_solution == secret_number:
+                # Solve the math term provided by the user
+                try:
+                    solution = eval(math_term)  # Evaluate the math term
+                except Exception as e:
+                    flash('Invalid mathematical term!')
+                    return redirect(url_for('login'))
+
+                # Verify the solution matches the secret number
+                if solution == secret_number:
                     session['username'] = username
                     return redirect(url_for('dashboard'))
 
@@ -225,20 +232,6 @@ def login():
         except Exception as e:
             logging.error(f"Error during login: {e}")
             flash('An error occurred during login. Please try again later.')
-    else:
-        # Generate a random math term for GET request
-        import random
-        num1 = random.randint(1, 10)
-        num2 = random.randint(1, 10)
-        operation = random.choice(['+', '*'])
-        math_term = f"{num1} {operation} {num2}"
-        solution = eval(math_term)  # Calculate the solution
-
-        # Store the solution temporarily in the session
-        session['math_solution'] = solution
-
-        return render_template('login.html', math_term=math_term)
-
     return render_template('login.html')
 
 @app.route('/dashboard')
